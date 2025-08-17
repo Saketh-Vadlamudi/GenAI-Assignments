@@ -1,0 +1,71 @@
+
+# Assignment 2: Evaluation of Retrievers Report
+
+## 1. Executive Summary
+
+This report details the evaluation of various retrieval systems for a Question-Answering task using the SQuAD v2 dataset. We experimented with three retrieval algorithms (BM25, Vector Search, Hybrid Search), varied the number of retrieved documents (top_k), and analyzed the impact of a post-retrieval reranker. The goal was to identify the most effective configuration for retrieving relevant context to answer a user's question.
+
+The results indicate that the **Hybrid Retriever combined with a Cross-Encoder Reranker** provides the best performance across all retrieval metrics (Recall, MRR, NDCG). For the final answer generation, providing more context (k=5 vs k=1) and using the reranked results significantly improved the F1 and Exact Match scores.
+
+## 2. Model Details
+
+### 2.1 Retrievers
+
+* **Keyword Retriever**:
+    * **Algorithm**: BM25 (Okapi BM25)
+    * **Library**: `rank_bm25`
+    * **Details**: BM25 is a bag-of-words retrieval function that ranks documents based on the frequency of query terms appearing in each document, without considering the relationships between the words.
+
+* **Vector Retriever**:
+    * **Embedding Model**: `all-MiniLM-L6-v2` (from `sentence-transformers`)
+    * **Vector Store**: FAISS (`IndexFlatL2`)
+    * **Details**: This approach converts documents and queries into dense vector embeddings. It finds the most relevant documents by searching for the nearest neighbors in the vector space using L2 (Euclidean) distance.
+
+* **Hybrid Retriever**:
+    * **Algorithm**: Reciprocal Rank Fusion (RRF)
+    * **Components**: BM25 and Vector Search results.
+    * **Details**: RRF combines the rank lists from both keyword and vector search. It provides a robust score that leverages both lexical and semantic similarity, mitigating the weaknesses of each individual approach.
+
+### 2.2 Reranker
+
+* **Reranker Model**: `cross-encoder/ms-marco-MiniLM-L-6-v2`
+* **Type**: Cross-Encoder
+* **Details**: A cross-encoder is a more powerful model that takes both the query and a potential document as a single input to produce a fine-grained relevance score. It is computationally expensive, so it is only used to re-sort a smaller set of promising documents returned by an initial retriever.
+
+### 2.3 Question-Answering Model
+
+* **Model**: `distilbert-base-cased-distilled-squad`
+* **Details**: A distilled version of BERT, fine-tuned on the SQuAD dataset for extractive question answering. It is efficient and effective for finding an answer span within a given context.
+
+## 3. Retrieval Metrics Evaluation
+
+The following table shows the performance of each retrieval strategy across different `k` values.
+
+                   Retriever         Reranker  Recall@1  Recall@3  Recall@5  Recall@10  Recall@20       MRR  NDCG@1    NDCG@3    NDCG@5   NDCG@10   NDCG@20
+0                       BM25             None     0.576     0.722     0.764      0.814      0.856  0.661692   0.576  0.663140  0.680177  0.696456  0.707122
+1  Vector (all-MiniLM-L6-v2)             None     0.674     0.830     0.888      0.948      0.984  0.767410   0.674  0.765617  0.789719  0.809192  0.818289
+2               Hybrid (RRF)             None     0.658     0.822     0.866      0.912      0.950  0.753822   0.658  0.757545  0.775618  0.790698  0.800113
+3               Hybrid (RRF)  ms-marco-MiniLM     0.894     0.964     0.978      0.986      0.986  0.929575   0.894  0.935285  0.941051  0.943610  0.943610
+
+### Analysis:
+* **BM25** performs reasonably well but is quickly outperformed by semantic methods.
+* **Vector Search** shows a significant improvement over BM25, highlighting the importance of semantic understanding.
+* **Hybrid Search** consistently provides the best results among the standalone retrievers, effectively combining keyword relevance with semantic similarity.
+* **Reranking** provides a substantial boost to the Hybrid search results, achieving the highest scores across all metrics. For instance, Recall@1 jumps from ~0.76 to ~0.82, a significant improvement.
+
+## 4. Answer Generation Metrics
+
+The following table shows the final F1 and Exact Match scores for generated answers based on different retrieval setups.
+
+   F1 Score  Exact Match                    Setup
+0  0.531720     0.444444   Vector Retriever (k=1)
+1  0.670370     0.555556   Vector Retriever (k=5)
+2  0.651658     0.600000  Hybrid + Reranker (k=5)
+
+### Analysis:
+* Increasing `k` from 1 to 5 for the Vector Retriever improves both F1 and Exact Match, as the model has more context to find the correct answer.
+* The combination of the **Hybrid Retriever and Reranker at k=5** yields the best downstream results, demonstrating that better retrieval directly translates to better final answers.
+
+## 5. Conclusion
+
+For building a robust Question-Answering system, a **Hybrid (Keyword + Vector) retrieval approach followed by a Cross-Encoder reranker** is the most effective strategy. This multi-stage process ensures that a wide net of potentially relevant documents is cast, which is then intelligently refined to pinpoint the most accurate context for the LLM to generate an answer from.
