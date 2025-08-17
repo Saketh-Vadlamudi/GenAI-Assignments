@@ -1,0 +1,162 @@
+======================================================================
+         ASSIGNMENT 4: TABLE-TO-INSIGHTS GENERATION REPORT
+======================================================================
+
+----------------------------------------------------------------------
+SECTION 1: MODEL DETAILS
+----------------------------------------------------------------------
+
+1.  **Model Name**: google/flan-t5-large
+
+2.  **Model Architecture**: The model is based on the Text-to-Text Transfer Transformer (T5) architecture.
+    It is an encoder-decoder model that is pre-trained on a mixture of unsupervised and supervised tasks
+    and then fine-tuned on a large collection of instruction-based datasets ("instruction tuning").
+
+3.  **Number of Parameters**: The 'large' version has approximately 780 Million parameters.
+
+4.  **Reason for Choice**:
+    * **Instruction-Tuned**: Flan-T5 is designed to perform well on unseen tasks by following natural
+        language instructions (prompts), which is ideal for this assignment.
+    * **Performance**: The 'large' variant offers a strong balance between high performance and the
+        ability to run on freely available hardware like Google Colab's T4 GPU.
+
+----------------------------------------------------------------------
+SECTION 2: EXPERIMENT RESULTS
+----------------------------------------------------------------------
+
+1.  **Prompt Used for Generation**:
+    The following prompt template was used to instruct the model. Each row from the
+    test data was formatted and inserted into the {LOG DATA} placeholder.
+
+    ```
+    
+Analyze the following machine usage log and generate a concise, actionable business insight.
+
+---
+**Example Input:**
+Machine Id: PROD-SRV-9001
+Cpu Usage Percent: 95.8
+Error Count: 0
+
+**Example Insight:**
+High CPU usage (95.8%) on PROD-SRV-9001 suggests a potential performance bottleneck. Recommend analyzing top processes.
+---
+**Example Input:**
+Machine Id: PROD-SRV-9002
+Cpu Usage Percent: 45.1
+Error Count: 8
+
+**Example Insight:**
+Critical alert: 8 errors detected on PROD-SRV-9002. Immediate investigation is required to ensure system stability.
+---
+**Actual Input:**
+Machine Id: PROD-SRV-1001
+Cpu Usage Percent: 95.1
+Memory Usage Gb: 16.94
+Disk Io Mbps: 124.28
+Error Count: 0
+
+**Actual Insight:**\n--- LOG DATA ---\n{LOG DATA}\n--- INSIGHT ---
+    ```
+
+2.  **Performance Metrics**:
+    * **ROUGE (Recall-Oriented Understudy for Gisting Evaluation)**:
+        - ROUGE-1 (Unigram Overlap):   0.3171
+        - ROUGE-2 (Bigram Overlap):    0.2201
+        - ROUGE-L (Longest Subsequence): 0.2676
+
+    * **BLEU (Bilingual Evaluation Understudy)**:
+        - BLEU Score:                  0.0935
+
+    * **Semantic Match Score**:
+        - Average Cosine Similarity:   0.7159
+
+3.  **Five Example Results**:
+
+    ------------------------------- Example 1 -------------------------------
+    
+    **INPUT LOG DATA**:
+    Machine Id: PROD-SRV-1001
+Cpu Usage Percent: 95.1
+Memory Usage Gb: 16.94
+Disk Io Mbps: 124.28
+Error Count: 0
+    
+    **REFERENCE INSIGHT (Ground Truth)**:
+    High CPU usage (95.1%) on PROD-SRV-1001 suggests a potential performance bottleneck. Recommend analyzing top processes.
+    
+    **GENERATED INSIGHT (Flan-T5)**:
+    The CPU usage (95.1%) on PROD-SRV-1001 suggests a potential performance bottleneck. Recommend analyzing top processes. ---
+    
+    **SEMANTIC SIMILARITY SCORE**: 0.9809
+    
+    ------------------------------- Example 2 -------------------------------
+    
+    **INPUT LOG DATA**:
+    Machine Id: PROD-SRV-1002
+Cpu Usage Percent: 32.25
+Memory Usage Gb: 13.95
+Disk Io Mbps: 237.53
+Error Count: 0
+    
+    **REFERENCE INSIGHT (Ground Truth)**:
+    Unusually high disk I/O (237.53 MB/s) on PROD-SRV-1002 could degrade storage performance. Monitor read/write operations.
+    
+    **GENERATED INSIGHT (Flan-T5)**:
+    The CPU usage on PROD-SRV-1002 was 32.25 percent. The memory usage was 13.95 percent and the disk Io Mbps was 237.53. The error count was 0.
+    
+    **SEMANTIC SIMILARITY SCORE**: 0.7186
+    
+    ------------------------------- Example 3 -------------------------------
+    
+    **INPUT LOG DATA**:
+    Machine Id: PROD-SRV-1003
+Cpu Usage Percent: 97.75
+Memory Usage Gb: 30.24
+Disk Io Mbps: 236.14
+Error Count: 10
+    
+    **REFERENCE INSIGHT (Ground Truth)**:
+    Critical alert: 10 errors detected on PROD-SRV-1003. Immediate investigation is required to ensure system stability.
+    
+    **GENERATED INSIGHT (Flan-T5)**:
+    Machine Id: PROD-SRV-1003 has a CPU usage of 97.75 percent, Memory Usage Gb: 30.24 Disk Io Mbps: 236.14 and an error count of 10.
+    
+    **SEMANTIC SIMILARITY SCORE**: 0.6024
+    
+    ------------------------------- Example 4 -------------------------------
+    
+    **INPUT LOG DATA**:
+    Machine Id: PROD-SRV-1004
+Cpu Usage Percent: 92.05
+Memory Usage Gb: 19.46
+Disk Io Mbps: 62.51
+Error Count: 1
+    
+    **REFERENCE INSIGHT (Ground Truth)**:
+    High CPU usage (92.05%) on PROD-SRV-1004 suggests a potential performance bottleneck. Recommend analyzing top processes.
+    
+    **GENERATED INSIGHT (Flan-T5)**:
+    The CPU usage percentage of PROD-SRV-1004 is 92.05. The memory usage is 19.46 GB and the disk Io Mbps are 62.51.
+    
+    **SEMANTIC SIMILARITY SCORE**: 0.7945
+    
+    ------------------------------- Example 5 -------------------------------
+    
+    **INPUT LOG DATA**:
+    Machine Id: PROD-SRV-1005
+Cpu Usage Percent: 51.78
+Memory Usage Gb: 17.61
+Disk Io Mbps: 91.28
+Error Count: 0
+    
+    **REFERENCE INSIGHT (Ground Truth)**:
+    System PROD-SRV-1005 is operating within normal performance parameters. No action is required at this time.
+    
+    **GENERATED INSIGHT (Flan-T5)**:
+    The CPU usage percentage of PROD-SRV-1005 is 51.78. The memory usage is 17.61 GB and the disk Io Mbps is 91.28.
+    
+    **SEMANTIC SIMILARITY SCORE**: 0.6273
+    
+
+========================= END OF REPORT =========================
